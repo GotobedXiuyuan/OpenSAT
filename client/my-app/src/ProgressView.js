@@ -1,111 +1,112 @@
 import React, { useState, useEffect } from 'react';
+import { getUserProgress, getAccuracy } from './apiUtils';
 
-const ProgressView = () => {
+const ProgressView = ({ userId }) => {
+ const [quizResults, setQuizResults] = useState({
+   totalQuestions: 0,
+   correctQuestions: 0,
+   incorrectQuestions: 0
+ });
+ const [weeklyAccuracy, setWeeklyAccuracy] = useState(0);
+ const [monthlyAccuracy, setMonthlyAccuracy] = useState(0);
 
+ useEffect(() => {
+   const fetchUserData = async () => {
+     try {
+       const progressResponse = await getUserProgress(userId);
+       if (progressResponse.type === 'success') {
+         const questions = progressResponse.data;
+         const correct = questions.filter(q => q.correct).length;
+         setQuizResults({
+           totalQuestions: questions.length,
+           correctQuestions: correct,
+           incorrectQuestions: questions.length - correct
+         });
+       }
 
-  const [quizResults, setQuizResults] = useState({
-    totalQuestions: 25,
-    correctQuestions: 18,
-    incorrectQuestions: 7
-  });
+       const weeklyResponse = await getAccuracy(userId, 'week');
+       if (weeklyResponse.type === 'success') {
+         setWeeklyAccuracy(weeklyResponse.data.averageAccuracy);
+       }
 
+       const monthlyResponse = await getAccuracy(userId, 'month');
+       if (monthlyResponse.type === 'success') {
+         setMonthlyAccuracy(monthlyResponse.data.averageAccuracy);
+       }
+     } catch (error) {
+       console.error('Error fetching user data:', error);
+     }
+   };
 
-  const getMotivationalMessage = (accuracy) => {
-    if (accuracy >= 90) return "Excellent work! You're SAT ready!";
-    if (accuracy >= 80) return "Great job! Keep pushing your limits!";
-    if (accuracy >= 70) return "Good progress. Stay focused!";
-    if (accuracy >= 60) return "You're improving. Don't give up!";
-    return "Keep practicing. Every mistake is a learning opportunity!";
-  };
+   if (userId) {
+     fetchUserData();
+   }
+ }, [userId]);
 
-  const accuracy = ((quizResults.correctQuestions / quizResults.totalQuestions) * 100).toFixed(1);
-  const motivationalMessage = getMotivationalMessage(parseFloat(accuracy));
+ const getMotivationalMessage = (accuracy) => {
+   if (accuracy >= 90) return "Excellent work! You're SAT ready!";
+   if (accuracy >= 80) return "Great job! Keep pushing your limits!";
+   if (accuracy >= 70) return "Good progress. Stay focused!";
+   if (accuracy >= 60) return "You're improving. Don't give up!";
+   return "Keep practicing. Every mistake is a learning opportunity!";
+ };
 
-  return (
-    <div style={{
-      backgroundColor: '#6a11cb',
-      background: 'linear-gradient(to right, #2575fc, #6a11cb)',
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Arial, sans-serif',
-      color: 'white',
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: '15px',
-        padding: '30px',
-        width: '400px',
-        textAlign: 'center',
-        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
-      }}>
-        <h1 style={{ marginBottom: '20px', fontSize: '24px' }}>
-          Performance Metrics
-        </h1>
+ const accuracy = quizResults.totalQuestions === 0 ? 0 : 
+   ((quizResults.correctQuestions / quizResults.totalQuestions) * 100).toFixed(1);
+ const motivationalMessage = getMotivationalMessage(parseFloat(accuracy));
 
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          marginBottom: '20px' 
-        }}>
-          <div>
-            <h3>Correct</h3>
-            <p style={{ 
-              color: 'lightgreen', 
-              fontSize: '24px', 
-              fontWeight: 'bold' 
-            }}>
-              {quizResults.correctQuestions}
-            </p>
-          </div>
-          <div>
-            <h3>Incorrect</h3>
-            <p style={{ 
-              color: 'lightcoral', 
-              fontSize: '24px', 
-              fontWeight: 'bold' 
-            }}>
-              {quizResults.incorrectQuestions}
-            </p>
-          </div>
-        </div>
+ return (
+   <div className="min-h-screen flex justify-center items-center">
+     <div className="bg-white p-4 rounded w-96">
+       <h1 className="text-xl font-bold mb-4">Progress Report</h1>
 
-        <div style={{ 
-          width: '100%', 
-          backgroundColor: 'rgba(255,255,255,0.2)', 
-          borderRadius: '10px', 
-          marginBottom: '20px' 
-        }}>
-          <div style={{
-            width: `${accuracy}%`,
-            height: '20px',
-            backgroundColor: accuracy >= 70 ? 'lightgreen' : 'orange',
-            borderRadius: '10px',
-            transition: 'width 0.5s ease-in-out'
-          }}/>
-        </div>
+       <div className="mb-4">
+         <div className="flex justify-between mb-2">
+           <div>
+             <div>Correct: {quizResults.correctQuestions}</div>
+             <div>Incorrect: {quizResults.incorrectQuestions}</div>
+           </div>
+         </div>
+       </div>
 
-        <div style={{ 
-          fontSize: '36px', 
-          fontWeight: 'bold', 
-          marginBottom: '15px' 
-        }}>
-          {accuracy}%
-        </div>
+       <div className="mb-4">
+         <div>
+           <h3>Overall Accuracy: {accuracy}%</h3>
+           <div className="w-full bg-gray-200 h-2">
+             <div 
+               className="bg-blue-500 h-2"
+               style={{ width: `${accuracy}%` }}
+             />
+           </div>
+         </div>
 
-        <div style={{ 
-          backgroundColor: 'rgba(255,255,255,0.2)', 
-          padding: '15px', 
-          borderRadius: '10px' 
-        }}>
-          {motivationalMessage}
-        </div>
-      </div>
-    </div>
-  );
+         <div className="mt-2">
+           <h3>Weekly: {weeklyAccuracy.toFixed(1)}%</h3>
+           <div className="w-full bg-gray-200 h-2">
+             <div 
+               className="bg-blue-500 h-2"
+               style={{ width: `${weeklyAccuracy}%` }}
+             />
+           </div>
+         </div>
+
+         <div className="mt-2">
+           <h3>Monthly: {monthlyAccuracy.toFixed(1)}%</h3>
+           <div className="w-full bg-gray-200 h-2">
+             <div 
+               className="bg-blue-500 h-2"
+               style={{ width: `${monthlyAccuracy}%` }}
+             />
+           </div>
+         </div>
+       </div>
+
+       <div className="border-t pt-2">
+         {motivationalMessage}
+       </div>
+     </div>
+   </div>
+ );
 };
 
 export default ProgressView;
