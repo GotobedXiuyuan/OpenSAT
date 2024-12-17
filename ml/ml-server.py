@@ -43,8 +43,8 @@ def recommend():
     
     if not question_id:
         return jsonify({"error": "question_id is required"}), 400
-    if not prev_questions:
-        return jsonify({"error": "prev_questions is required"}), 400
+    # if not prev_questions:
+    #     return jsonify({"error": "prev_questions is required"}), 400
     
     if not isinstance(prev_questions, list):
         print(len(prev_questions))

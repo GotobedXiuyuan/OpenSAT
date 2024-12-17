@@ -1,19 +1,18 @@
-const API_URL = 'http://localhost:3001';
-const FIREBASE_API_URL = '/api/firebase';
+const API_URL = 'http://localhost:4000';
 
-export const getRecommendations = async (questionId, prevQuestions, topN = 3) => {
+export const getRandomQuestions = async (userId, numQuestions) => {
   try {
-    const response = await fetch(`${API_URL}/get-recommendation-from-tensor`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        question_id: questionId,
-        prev_questions: prevQuestions,
-        top_n: topN
-      }),
-    });
+    const response = await fetch(`${API_URL}/get-random-questions?user_id=${userId}&num_questions=${numQuestions}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting random questions:', error);
+    throw error;
+  }
+}
+
+export const getRecommendations = async (userId, questionId) => {
+  try {
+    const response = await fetch(`${API_URL}/get-recommendation?user_id=${userId}&question_id=${questionId}`);
     return await response.json();
   } catch (error) {
     console.error('Error fetching recommendations:', error);
@@ -23,7 +22,7 @@ export const getRecommendations = async (questionId, prevQuestions, topN = 3) =>
 
 export const updateProgress = async (userId, questionId, correctAnswer, answerChosen, correct) => {
   try {
-    const response = await fetch(`${FIREBASE_API_URL}/updateStudentProgress`, {
+    const response = await fetch(`${API_URL}/updateStudentProgress`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +44,7 @@ export const updateProgress = async (userId, questionId, correctAnswer, answerCh
 
 export const getUserProgress = async (userId) => {
   try {
-    const response = await fetch(`${FIREBASE_API_URL}/getUserProgress/${userId}`);
+    const response = await fetch(`${API_URL}/getUserProgress/${userId}`);
     return await response.json();
   } catch (error) {
     console.error('Error fetching user progress:', error);
@@ -55,7 +54,7 @@ export const getUserProgress = async (userId) => {
 
 export const getAccuracy = async (userId, timeframe) => {
   try {
-    const response = await fetch(`${FIREBASE_API_URL}/getStudentAccuracy/${userId}/${timeframe}`);
+    const response = await fetch(`${API_URL}/getStudentAccuracy/${userId}/${timeframe}`);
     return await response.json();
   } catch (error) {
     console.error('Error fetching accuracy:', error);

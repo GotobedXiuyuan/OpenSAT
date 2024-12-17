@@ -9,11 +9,9 @@ const CLERK_PUBLISHABLE_KEY = 'pk_test_cG93ZXJmdWwtb3Bvc3N1bS04Ny5jbGVyay5hY2Nvd
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <App />
     </ClerkProvider>
-  </React.StrictMode>
 );
 
 reportWebVitals();

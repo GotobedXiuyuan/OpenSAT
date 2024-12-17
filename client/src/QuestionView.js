@@ -1,38 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { getRecommendations, updateProgress } from './apiUtils';
+import { getRandomQuestions, getRecommendations, updateProgress } from './apiUtils';
 
-const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
-  const [questionData, setQuestionData] = useState({
-    question: "Solve for X: 3x + 5 = 20?",
-    choices: [
-      { id: 1, text: "5", isCorrect: true },
-      { id: 2, text: "3", isCorrect: false },
-      { id: 3, text: "4", isCorrect: false },
-      { id: 4, text: "6", isCorrect: false }
-    ],
-    explanation: "Insert explanation text here"
-  });
-
+const QuestionView = ({ userId, currentQuestionId }) => {
+  const [questionData, setQuestionData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [recommendedQuestions, setRecommendedQuestions] = useState([]);
-  const [prevQuestions, setPrevQuestions] = useState([]);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [currentRecommendedQuestionInd, setCurrentRecommendedQuestionInd] = useState(0);
 
   useEffect(() => {
-    const fetchRecommendations = async () => {
+    const getFirstQuestion = async () => {
       try {
-        const recommendations = await getRecommendations(currentQuestionId, prevQuestions);
-        setRecommendedQuestions(recommendations);
+        const randomQs = await getRandomQuestions(userId, 1);
+        setQuestionData(randomQs[0]);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
       }
     };
 
-    if (currentQuestionId) {
-      fetchRecommendations();
-    }
-  }, [currentQuestionId, prevQuestions]);
+    getFirstQuestion();
+  }, [userId]);
 
   const handleChoiceClick = async (choice) => {
     setSelectedChoice(choice);
@@ -46,22 +35,29 @@ const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
         choice.text,
         choice.isCorrect
       );
-
-      setPrevQuestions(prev => [...prev, {
-        questionId: currentQuestionId,
-        correct: choice.isCorrect
-      }]);
     } catch (error) {
       console.error('Error updating progress:', error);
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    setLoading(true);
     setSelectedChoice(null);
     setIsAnswered(false);
-    if (onNextQuestion) {
-      onNextQuestion();
+    if (recommendedQuestions.length === 0 || currentRecommendedQuestionInd === recommendedQuestions.length - 1) {
+      const data = await getRecommendations(userId, questionData.id);
+      setRecommendedQuestions(data.recommendation);
+      setCurrentRecommendedQuestionInd(0);
+      console.log(data.recommendation[0].question)
+      setQuestionData(data.recommendation[0].question);
+      setLoading(false);
     }
+    else {
+      setQuestionData(recommendedQuestions[currentRecommendedQuestionInd + 1].question);
+      setCurrentRecommendedQuestionInd(currentRecommendedQuestionInd + 1);
+      setLoading(false);
+    }
+    
   };
 
   const getChoiceStyle = (choice) => {
@@ -73,6 +69,10 @@ const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
     return "bg-white hover:bg-blue-50 border-blue-200";
   };
 
+  if (!questionData || loading) {
+    return <div>Loading...</div>
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full p-8 space-y-6">
@@ -81,25 +81,25 @@ const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
         </div>
         
         <div className="text-xl font-semibold text-gray-700 mb-6">
-          {questionData.question}
+          {questionData.question.question}
         </div>
         
         <div className="space-y-4">
-          {questionData.choices.map((choice) => (
+          {Object.entries(questionData.question.choices).map(([key, value]) => (
             <button
-              key={choice.id}
-              onClick={() => handleChoiceClick(choice)}
+              key={key}
+              onClick={() => handleChoiceClick({ id: key, text: value, isCorrect: key === questionData.question.correct_answer })}
               className={`
                 w-full text-left p-4 rounded-lg border-2 transition-all duration-300
-                ${getChoiceStyle(choice)}
+                ${getChoiceStyle({ id: key, text: value, isCorrect: key === questionData.question.correct_answer })}
                 ${isAnswered ? 'cursor-not-allowed' : 'cursor-pointer'}
               `}
               disabled={isAnswered}
             >
               <div className="flex justify-between items-center">
-                <span>{choice.text}</span>
-                {selectedChoice && selectedChoice.id === choice.id && (
-                  choice.isCorrect 
+                <span>{value}</span>
+                {selectedChoice && selectedChoice.id === key && (
+                  key === questionData.question.correct_answer 
                     ? <CheckCircle className="text-green-600" />
                     : <XCircle className="text-red-600" />
                 )}
@@ -111,7 +111,7 @@ const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
         {isAnswered && (
           <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mt-4">
             <h3 className="font-bold text-blue-800 mb-2">Explanation:</h3>
-            <p className="text-blue-700">{questionData.explanation}</p>
+            <p className="text-blue-700">{questionData.question.explanation}</p>
           </div>
         )}
 

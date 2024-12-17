@@ -3,12 +3,14 @@
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.1.2",
     "axios": "^1.7.8",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "firebase": "^11.1.0",
     "firebase-admin": "^13.0.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/supertest": "^6.0.2",

@@ -28,9 +28,7 @@ function App() {
         </div>
         
         {view === 'question' ? (
-          <QuestionView userId={user.id} currentQuestionId="281a4f3b" onNextQuestion={() => {
-            fetchNextQuestion();
-          }} />
+          <QuestionView userId={user.id} />
         ) : (
           <ProgressView userId={user.id} />
         )}

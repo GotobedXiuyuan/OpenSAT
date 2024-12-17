@@ -5,9 +5,14 @@ import { requireAuth } from '@clerk/clerk-sdk-node';
 import path from 'path';
 import axios from 'axios';
 import fs from 'fs';
+import cors from 'cors';
+
+
 
 const app = express();
 const port = 4000;
+
+app.use(cors({ origin: '*' }));
 
 // Parse JSON body
 app.use(express.json());
@@ -160,12 +165,11 @@ app.get('/get-recommendation', async (req: any, res: any) => {
 
     const modelResponse = response.data;
     // I modified this code only works for xiuyuan
-    const recommendations = modelResponse.recommendation.map((rec: any) => {
-    //const recommendations = modelResponse.map((rec: any) => {
+    // console.log(modelResponse);
+    const recommendations = modelResponse.map((rec: any) => {
       const question = satDataset.math.find((q: any) => q.id === rec.id) || satDataset.english.find((q: any) => q.id === rec.id);
       return {
-      ...rec,
-      question: question ? question : null
+        question
       };
     });
 
@@ -184,6 +188,11 @@ const satDataset = JSON.parse(fs.readFileSync(satDatasetPath, 'utf8'));
 app.get('/get-random-questions', async (req: any, res: any) => {
   try {
     const userId: any = req.query.user_id;
+    let numQuestions: any = req.query.num_questions;
+
+    if (!numQuestions) {
+      numQuestions = 10;
+    }
 
     if (typeof userId !== 'string' || userId === '') {
       return res.status(400).send('User ID is a required string');
@@ -208,8 +217,8 @@ app.get('/get-random-questions', async (req: any, res: any) => {
       return shuffled.slice(0, count);
     };
 
-    const randomMathQuestions = getRandomQuestions(mathQuestions, 10);
-    const randomEnglishQuestions = getRandomQuestions(englishQuestions, 10);
+    const randomMathQuestions = getRandomQuestions(mathQuestions, numQuestions);
+    const randomEnglishQuestions = getRandomQuestions(englishQuestions, numQuestions);
 
     const randomQuestions = [...randomMathQuestions, ...randomEnglishQuestions];
 
