@@ -23,18 +23,36 @@ describe('GET /get-recommendation', () => {
 });
 
 
-// describe('GET /get-progress-data', () => {
-//   // NEW TEST: Unauthorized user type
-//   test('should return 401 for unauthorized userType', async () => {
-//     const response = await request(app)
-//       .get('/get-progress-data')
-//       .query({ userType: 'unauthorizedType', userId: 'testUserId' })
-//       .expect(401);
+//GET /get-progress-data
+describe('GET /get-progress-data', () => {
+  test('should return progress data for authorized student', async () => {
+    const response = await request(app)
+      .get('/get-progress-data')
+      .query({ userType: 'student', userId: 'testUserId' })
+      .expect(200);
 
-//     expect(response.text).toContain('is unauthorized');
-//   });
+    expect(response.status).toBe(200);
+    expect(response.body).toBeDefined();
+  });
 
-// });
+  test('should return 403 for non-student user type', async () => {
+    const response = await request(app)
+      .get('/get-progress-data')
+      .query({ userType: 'parent', userId: 'testUserId' })
+      .expect(403);
+
+    expect(response.text).toBe('Access denied: Only students can get progress data');
+  });
+
+  test('should return 400 for missing parameters', async () => {
+    const response = await request(app)
+      .get('/get-progress-data')
+      .query({}) // Missing userType and userId
+      .expect(400);
+
+    expect(response.text).toContain('User type is a required string');
+  });
+});
 
 describe('GET /get-random-questions', () => {
   // NEW TEST: User who answered all questions
@@ -68,5 +86,60 @@ describe('GET /get-student-accuracy', () => {
       .get('/get-student-accuracy')
       .query({ userId: 'testUserId', timeframe: 'week' }) // not 'week' or 'month'
       .expect(200);
+  });
+});
+
+
+//POST /set-user-type
+describe('POST /set-user-type', () => {
+  test('should update user type successfully', async () => {
+    const response = await request(app)
+      .post('/set-user-type')
+      .send({
+        userType: 'student',
+        userId: 'testUserId',
+        authenticated: true,
+      })
+      .expect(200);
+
+    expect(response.body.message).toBe('User type updated to student');
+  });
+
+  test('should return 400 for invalid userType', async () => {
+    const response = await request(app)
+      .post('/set-user-type')
+      .send({
+        userType: 'invalidType',
+        userId: 'testUserId',
+        authenticated: true,
+      })
+      .expect(400);
+
+    expect(response.body.error).toBe('Invalid user type');
+  });
+
+  test('should return 403 if not authenticated', async () => {
+    const response = await request(app)
+      .post('/set-user-type')
+      .send({
+        userType: 'student',
+        userId: 'testUserId',
+        authenticated: false, // Not authenticated
+      })
+      .expect(403);
+
+    expect(response.body.error).toBe('User is not authenticated');
+  });
+
+  test('should return 400 for missing userId', async () => {
+    const response = await request(app)
+      .post('/set-user-type')
+      .send({
+        userType: 'student',
+        authenticated: true, // Missing userId
+      })
+      .expect(400);
+
+    expect(response.body.error).toBe('User ID is required');
   });
 });
