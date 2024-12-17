@@ -22,7 +22,7 @@ export const getRecommendations = async (userId, questionId) => {
 
 export const updateProgress = async (userId, questionId, correctAnswer, answerChosen, correct) => {
   try {
-    const response = await fetch(`${API_URL}/updateStudentProgress`, {
+    const response = await fetch(`${API_URL}/update-progress-data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export const updateProgress = async (userId, questionId, correctAnswer, answerCh
 
 export const getUserProgress = async (userId) => {
   try {
-    const response = await fetch(`${API_URL}/getUserProgress/${userId}`);
+    const response = await fetch(`${API_URL}/get-progress-data?userId=${userId}&userType=student`);
     return await response.json();
   } catch (error) {
     console.error('Error fetching user progress:', error);
@@ -54,7 +54,7 @@ export const getUserProgress = async (userId) => {
 
 export const getAccuracy = async (userId, timeframe) => {
   try {
-    const response = await fetch(`${API_URL}/getStudentAccuracy/${userId}/${timeframe}`);
+    const response = await fetch(`${API_URL}/get-student-accuracy?userId=${userId}&timeframe=${timeframe}`);
     return await response.json();
   } catch (error) {
     console.error('Error fetching accuracy:', error);
