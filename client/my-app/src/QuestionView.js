@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { getRecommendations, updateProgress } from './apiUtils';
 
-const QuestionView = ({ userId, currentQuestionId }) => {
+const QuestionView = ({ userId, currentQuestionId, onNextQuestion }) => {
   const [questionData, setQuestionData] = useState({
     question: "Solve for X: 3x + 5 = 20?",
     choices: [
@@ -15,9 +15,9 @@ const QuestionView = ({ userId, currentQuestionId }) => {
   });
 
   const [selectedChoice, setSelectedChoice] = useState(null);
-  const [showExplanation, setShowExplanation] = useState(false);
   const [recommendedQuestions, setRecommendedQuestions] = useState([]);
   const [prevQuestions, setPrevQuestions] = useState([]);
+  const [isAnswered, setIsAnswered] = useState(false);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -36,10 +36,7 @@ const QuestionView = ({ userId, currentQuestionId }) => {
 
   const handleChoiceClick = async (choice) => {
     setSelectedChoice(choice);
-    
-    if (!choice.isCorrect) {
-      setShowExplanation(true);
-    }
+    setIsAnswered(true);
 
     try {
       await updateProgress(
@@ -59,6 +56,14 @@ const QuestionView = ({ userId, currentQuestionId }) => {
     }
   };
 
+  const handleNext = () => {
+    setSelectedChoice(null);
+    setIsAnswered(false);
+    if (onNextQuestion) {
+      onNextQuestion();
+    }
+  };
+
   const getChoiceStyle = (choice) => {
     if (selectedChoice && selectedChoice.id === choice.id) {
       return choice.isCorrect 
@@ -66,10 +71,6 @@ const QuestionView = ({ userId, currentQuestionId }) => {
         : "bg-red-100 border-red-500 text-red-800";
     }
     return "bg-white hover:bg-blue-50 border-blue-200";
-  };
-
-  const toggleExplanation = () => {
-    setShowExplanation(!showExplanation);
   };
 
   return (
@@ -91,9 +92,9 @@ const QuestionView = ({ userId, currentQuestionId }) => {
               className={`
                 w-full text-left p-4 rounded-lg border-2 transition-all duration-300
                 ${getChoiceStyle(choice)}
-                ${selectedChoice ? 'cursor-not-allowed' : 'cursor-pointer'}
+                ${isAnswered ? 'cursor-not-allowed' : 'cursor-pointer'}
               `}
-              disabled={!!selectedChoice}
+              disabled={isAnswered}
             >
               <div className="flex justify-between items-center">
                 <span>{choice.text}</span>
@@ -107,23 +108,14 @@ const QuestionView = ({ userId, currentQuestionId }) => {
           ))}
         </div>
         
-        {showExplanation && (
+        {isAnswered && (
           <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mt-4">
             <h3 className="font-bold text-blue-800 mb-2">Explanation:</h3>
             <p className="text-blue-700">{questionData.explanation}</p>
           </div>
         )}
-        
-        {selectedChoice && !selectedChoice.isCorrect && (
-          <button 
-            onClick={toggleExplanation}
-            className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 mt-4"
-          >
-            {showExplanation ? 'Hide Explanation' : 'View Explanation'}
-          </button>
-        )}
 
-        {recommendedQuestions.length > 0 && selectedChoice && (
+        {recommendedQuestions.length > 0 && isAnswered && (
           <div className="mt-6">
             <h3 className="font-bold text-gray-800 mb-3">Recommended Questions:</h3>
             <div className="space-y-2">
@@ -137,6 +129,15 @@ const QuestionView = ({ userId, currentQuestionId }) => {
               ))}
             </div>
           </div>
+        )}
+
+        {isAnswered && (
+          <button 
+            onClick={handleNext}
+            className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 mt-4"
+          >
+            Next Question
+          </button>
         )}
       </div>
     </div>

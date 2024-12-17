@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.1.2",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
