@@ -2,22 +2,22 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Question View Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Go to the home page and sign in
+
     await page.goto('http://localhost:3000');
-    // You'll need to modify this based on your actual auth flow
+
     await page.getByRole('button', { name: 'Sign In' }).click();
     await page.fill('input[name="email"]', 'notreal3@brown.edu');
     await page.fill('input[name="password"]', 'notrealnotreal');
     await page.click('button[type="submit"]');
-    // Wait for the question page to load
+
     await page.waitForSelector('.text-2xl');
   });
 
   test('shows green feedback for correct answer', async ({ page }) => {
-    // Get all choice buttons
+
     const choices = await page.$$('button.text-left');
     
-    // Click each choice until we find the correct one (marked by green)
+    // Click each choice until we find the correct one 
     for (const choice of choices) {
       await choice.click();
       const classNames = await choice.getAttribute('class');
@@ -36,15 +36,17 @@ test.describe('Question View Tests', () => {
     // Get all choice buttons
     const choices = await page.$$('button.text-left');
     
-    // Click each choice until we find an incorrect one (marked by red)
+    // Click each choice until we find an incorrect one
     for (const choice of choices) {
       await choice.click();
       const classNames = await choice.getAttribute('class');
       if (classNames?.includes('bg-red-100')) {
+
         // Found incorrect answer with red background
         expect(classNames).toContain('border-red-500');
         break;
       }
+
       // If not incorrect, reload for next attempt
       await page.reload();
       await page.waitForSelector('text=Practice Question');
@@ -69,16 +71,15 @@ test.describe('Question View Tests', () => {
     await page.click('button:has-text("Switch to Question View")');
     await page.waitForSelector('text=Practice Question');
 
-    // Answer a question (try to get it correct)
+    // Answer a question
     const choices = await page.$$('button.text-left');
     for (const choice of choices) {
       await choice.click();
       const classNames = await choice.getAttribute('class');
       if (classNames?.includes('bg-green-100')) {
-        // Got correct answer, can move on
+
         break;
       }
-      // If not correct, reload and try again
       await page.reload();
       await page.waitForSelector('text=Practice Question');
     }
@@ -100,7 +101,6 @@ test.describe('Question View Tests', () => {
 
     // Verify numbers increased appropriately
     expect(updatedTotal).toBe(initialTotal + 1);
-    // If we got a correct answer, correct count should increase
     if (updatedCorrect > initialCorrect) {
       expect(updatedCorrect).toBe(initialCorrect + 1);
     }
