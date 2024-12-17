@@ -1,28 +1,26 @@
 import express from 'express';
 import * as admin from 'firebase-admin';
 import { FirestoreUtils, FirestoreUtilResponse } from './FirestoreUtils';
+import { requireAuth } from '@clerk/clerk-sdk-node';
 import path from 'path';
-
-const app = express();
-const port = 3000;
-
-// Parse JSON body (for POST requests)
-app.use(express.json());
-
-// Load service account key
-const serviceAccountPath = path.join(__dirname, '../res/serviceAccountKey.json');
-const serviceAccount = require(serviceAccountPath);
 import axios from 'axios';
 import fs from 'fs';
 
+const app = express();
+const port = 4000;
+
+// Parse JSON body
+app.use(express.json());
+
 // Initialize Firebase Admin SDK
+const serviceAccountPath = path.join(__dirname, '../res/serviceAccountKey.json');
+const serviceAccount = require(serviceAccountPath);
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
-
-// Instantiate FirestoreUtils with the Firestore instance
 const firestoreUtils = new FirestoreUtils(db);
 
 
@@ -58,34 +56,74 @@ const firestoreUtils = new FirestoreUtils(db);
 //     res.status(500).send({ error: 'Internal server error' });
 //   }
 // });
+app.post('/set-user-type', async (req: any, res: any) => {
+  try {
+    const { userType, userId, authenticated } = req.body;
+
+    console.log('Request Body:', req.body); 
+
+    // Validate the 'authenticated' flag
+    if (!authenticated) {
+      return res.status(403).json({ error: 'User is not authenticated' });
+    }
+
+    // Validate userType
+    const allowedTypes = ['student', 'tutor', 'parent'];
+    if (!allowedTypes.includes(userType)) {
+      return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Simulate updating the user type in Firestore
+    console.log(`Updating user ${userId} to type: ${userType}`);
+   
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({ userType }, { merge: true });
+
+    res.status(200).json({ message: `User type updated to ${userType}` });
+  } catch (error) {
+    console.error('Error setting user type:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Get progress data
 
 app.get('/get-progress-data', async (req: any, res: any) => {
   try {
-    const userType: any = req.query.userType;
-    const userId: any = req.query.userId;
+    const userType: any = req.query.userType; // userType passed in the request
+    const userId: any = req.query.userId;     // userId passed in the request
 
+    // Validate input parameters
     if (typeof userType !== 'string' || userType === '') {
       return res.status(400).send('User type is a required string');
-    } 
+    }
     if (typeof userId !== 'string' || userId === '') {
       return res.status(400).send('User ID is a required string');
     }
 
-    // Use FirestoreUtils to get actual data from Firestore
+    // Allow only students to access the endpoint
+    if (userType !== 'student') {
+      return res.status(403).send('Access denied: Only students can get progress data');
+    }
+
+    // Fetch user progress from Firestore
     const firestoreRes: FirestoreUtilResponse = await firestoreUtils.getUserProgress(userId);
 
     if (firestoreRes.type === 'unauthorized') {
-      res.status(401).send("User type " + userType + " is unauthorized to access user " + userId + "'s progress");
+      return res.status(401).send(`User type '${userType}' is unauthorized to access user '${userId}' progress`);
     } else if (firestoreRes.type === 'success') {
-      res.status(200).send(firestoreRes.data);
+      return res.status(200).send(firestoreRes.data);
     } else {
-      res.status(500).send('Error fetching data: ' + firestoreRes.details);
+      return res.status(500).send('Error fetching data: ' + firestoreRes.details);
     }
   } catch (error) {
-    console.log("Error sending progress data: ", error);
-    res.status(500).send('Error fetching data');
+    console.error("Error sending progress data:", error);
+    return res.status(500).send('Error fetching data');
   }
 });
 
@@ -106,8 +144,8 @@ app.get('/get-recommendation', async (req: any, res: any) => {
     if (questionResponse.type !== 'success' || !questionResponse.data) {
       return res.status(500).send('Error fetching user progress: could not get previous questions');
     }
-
-    const response = await axios.post('http://localhost:3001/get-recommendation-from-tensor', {
+    // I only changed local host to 127.0.0.1 works only works for xiuyuan
+    const response = await axios.post('http://127.0.0.1:3001/get-recommendation-from-tensor', {
       question_id: questionId,
       prev_questions: questionResponse.data,
     }, {
@@ -121,7 +159,9 @@ app.get('/get-recommendation', async (req: any, res: any) => {
     }
 
     const modelResponse = response.data;
+    // I modified this code only works for xiuyuan
     const recommendations = modelResponse.recommendation.map((rec: any) => {
+    //const recommendations = modelResponse.map((rec: any) => {
       const question = satDataset.math.find((q: any) => q.id === rec.id) || satDataset.english.find((q: any) => q.id === rec.id);
       return {
       ...rec,
