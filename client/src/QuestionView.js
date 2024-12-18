@@ -24,7 +24,10 @@ const QuestionView = ({ userId }) => {
   }, [userId]);
 
   const handleRecommendationClick = (recommendedQuestion, index) => {
-    setCurrentRecommendedQuestionInd(index);
+    setCurrentRecommendedQuestionInd(index - 1);
+    setRecommendedQuestions((prev) => {
+      return prev.filter((rec, i) => i !== index);
+    })
     setQuestionData(recommendedQuestion.question);
     setSelectedChoice(null);
     setIsAnswered(false);
@@ -60,7 +63,7 @@ const QuestionView = ({ userId }) => {
         const data = await getRecommendations(userId, questionData.id);
         console.log('Backend recommendations:', data);
         if (data.recommendation && data.recommendation.length > 0) {
-          setRecommendedQuestions(data.recommendation);
+          setRecommendedQuestions(data.recommendation.length === 0 ? [] : data.recommendation.slice(1));
           setCurrentRecommendedQuestionInd(0);
           setQuestionData(data.recommendation[0].question);
         } else {
@@ -180,11 +183,6 @@ const QuestionView = ({ userId }) => {
                     <span className="text-sm text-gray-600 ml-2">
                       (Difficulty: {rec.question.difficulty || "Unknown"})
                     </span>
-                    {index === currentRecommendedQuestionInd && (
-                      <span className="text-sm text-blue-600 ml-2">
-                        (Current)
-                      </span>
-                    )}
                   </button>
                 ))}
               </div>
