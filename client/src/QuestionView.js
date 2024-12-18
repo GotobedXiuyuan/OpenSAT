@@ -23,6 +23,13 @@ const QuestionView = ({ userId }) => {
     getFirstQuestion();
   }, [userId]);
 
+  const handleRecommendationClick = (recommendedQuestion, index) => {
+    setCurrentRecommendedQuestionInd(index);
+    setQuestionData(recommendedQuestion.question);
+    setSelectedChoice(null);
+    setIsAnswered(false);
+  };
+
   const handleChoiceClick = async (choice) => {
     if (isAnswered || !questionData) return;
     
@@ -47,23 +54,30 @@ const QuestionView = ({ userId }) => {
     setLoading(true);
     setSelectedChoice(null);
     setIsAnswered(false);
-
+  
     try {
       if (recommendedQuestions.length === 0 || currentRecommendedQuestionInd === recommendedQuestions.length - 1) {
         const data = await getRecommendations(userId, questionData.id);
-        setRecommendedQuestions(data.recommendation);
-        setCurrentRecommendedQuestionInd(0);
-        setQuestionData(data.recommendation[0].question);
+        console.log('Backend recommendations:', data);
+        if (data.recommendation && data.recommendation.length > 0) {
+          setRecommendedQuestions(data.recommendation);
+          setCurrentRecommendedQuestionInd(0);
+          setQuestionData(data.recommendation[0].question);
+        } else {
+          console.warn('No recommendations returned from backend.');
+          const randomQuestion = await getRandomQuestions(userId, 1);
+          setQuestionData(randomQuestion[0]);
+        }
       } else {
-        setQuestionData(recommendedQuestions[currentRecommendedQuestionInd + 1].question);
         setCurrentRecommendedQuestionInd(currentRecommendedQuestionInd + 1);
+        setQuestionData(recommendedQuestions[currentRecommendedQuestionInd + 1].question);
       }
     } catch (error) {
-      console.error('Error getting next question:', error);
+      console.error('Error fetching next question:', error);
       const randomQuestion = await getRandomQuestions(userId, 1);
       setQuestionData(randomQuestion[0]);
     }
-    
+  
     setLoading(false);
   };
 
@@ -145,21 +159,38 @@ const QuestionView = ({ userId }) => {
             </div>
           )}
 
-        {recommendedQuestions.length > 0 && isAnswered && (
-          <div className="mt-6">
-            <h3 className="font-bold text-gray-800 mb-3">Recommended Questions:</h3>
-            <div className="space-y-2">
-              {recommendedQuestions.map((rec) => (
-                <div key={rec.id} className="p-3 bg-blue-50 rounded-lg">
-                  <span className="font-medium">Question {rec.id}</span>
-                  <span className="text-sm text-gray-600 ml-2">
-                    (Similarity: {(rec.similarity * 100).toFixed(1)}%)
-                  </span>
-                </div>
-              ))}
+          {recommendedQuestions.length > 0 && isAnswered && (
+            <div className="mt-6">
+              <h3 className="font-bold text-gray-800 mb-3">Recommended Questions:</h3>
+              <div className="space-y-2">
+                {recommendedQuestions.map((rec, index) => (
+                  <button
+                    key={rec.id}
+                    onClick={() => handleRecommendationClick(rec, index)}
+                    className={`
+                      w-full p-3 text-left rounded-lg transition-all duration-300
+                      ${index === currentRecommendedQuestionInd 
+                        ? 'bg-blue-100 border-2 border-blue-500' 
+                        : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'}
+                    `}
+                  >
+                    <span className="font-medium">
+                      Question ID: {rec.question.id}
+                    </span>
+                    <span className="text-sm text-gray-600 ml-2">
+                      (Difficulty: {rec.question.difficulty || "Unknown"})
+                    </span>
+                    {index === currentRecommendedQuestionInd && (
+                      <span className="text-sm text-blue-600 ml-2">
+                        (Current)
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
 
           {isAnswered && (
             <button 
