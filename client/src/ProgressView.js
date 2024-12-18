@@ -21,25 +21,28 @@ const ProgressView = ({ userId }) => {
           correctQuestions: correct,
           incorrectQuestions: questions.length - correct
         });
-
+  
         const weeklyResponse = await getAccuracy(userId, 'week');
-        if (weeklyResponse.type === 'success') {
-          setWeeklyAccuracy(weeklyResponse.data.averageAccuracy);
-        }
 
+        if (weeklyResponse.averageAccuracy !== undefined) {
+          setWeeklyAccuracy(weeklyResponse.averageAccuracy);
+        }
+  
         const monthlyResponse = await getAccuracy(userId, 'month');
-        if (monthlyResponse.type === 'success') {
-          setMonthlyAccuracy(monthlyResponse.data.averageAccuracy);
+
+        if (monthlyResponse.averageAccuracy !== undefined) {
+          setMonthlyAccuracy(monthlyResponse.averageAccuracy);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
-
+  
     if (userId) {
       fetchUserData();
     }
   }, [userId]);
+  
 
   const getMotivationalMessage = (accuracy) => {
     if (accuracy >= 90) return "Excellent work! You're SAT ready!";
@@ -73,7 +76,7 @@ const ProgressView = ({ userId }) => {
             <h3 className="font-semibold mb-2">Overall Accuracy: {accuracy}%</h3>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                className="bg-blue-300 h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${accuracy}%` }}
               />
             </div>
@@ -83,7 +86,7 @@ const ProgressView = ({ userId }) => {
             <h3 className="font-semibold mb-2">Weekly Accuracy: {weeklyAccuracy.toFixed(1)}%</h3>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${weeklyAccuracy}%` }}
               />
             </div>
