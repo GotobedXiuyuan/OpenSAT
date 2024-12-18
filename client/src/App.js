@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { SignIn, useUser } from '@clerk/clerk-react';
 import QuestionView from './QuestionView';
 import ProgressView from './ProgressView';
+import NavigationButton from './NavigationButton';
 
 function App() {
-  const [view, setView] = useState('question');
   const { isSignedIn, user } = useUser();
-  
+
   if (!isSignedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center">
@@ -16,24 +17,20 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600">
-      <div className="container mx-auto px-4">
-        <div className="py-4 flex justify-center">
-          <button
-            onClick={() => setView(view === 'question' ? 'progress' : 'question')}
-            className="bg-white/20 hover:bg-white/30 text-white font-bold py-2 px-6 rounded-full backdrop-blur-lg transition-all duration-300"
-          >
-            Switch to {view === 'question' ? 'Progress' : 'Question'} View
-          </button>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600">
+        <div className="container mx-auto px-4">
+          <div className="py-4 flex justify-center">
+            <NavigationButton />
+          </div>
+          <Routes>
+            <Route path="/question" element={<QuestionView userId={user.id} />} />
+            <Route path="/progress" element={<ProgressView userId={user.id} />} />
+            <Route path="*" element={<Navigate to="/question" replace />} />
+          </Routes>
         </div>
-        
-        {view === 'question' ? (
-          <QuestionView userId={user.id} />
-        ) : (
-          <ProgressView userId={user.id} />
-        )}
       </div>
-    </div>
+    </Router>
   );
 }
 

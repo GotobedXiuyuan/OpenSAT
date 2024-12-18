@@ -3,14 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Question View Tests', () => {
   test.beforeEach(async ({ page }) => {
 
-    await page.goto('http://localhost:3000');
-
-    await page.getByRole('button', { name: 'Sign In' }).click();
-    await page.fill('input[name="email"]', 'notreal3@brown.edu');
-    await page.fill('input[name="password"]', 'notrealnotreal');
-    await page.click('button[type="submit"]');
-
-    await page.waitForSelector('.text-2xl');
+    await page.goto('http://localhost:3000/question');
+    await expect(page).toHaveURL('/question');
   });
 
   test('shows green feedback for correct answer', async ({ page }) => {
