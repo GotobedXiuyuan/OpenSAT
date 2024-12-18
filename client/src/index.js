@@ -5,7 +5,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const CLERK_PUBLISHABLE_KEY = 'pk_test_cG93ZXJmdWwtb3Bvc3N1bS04Ny5jbGVyay5hY2NvdW50cy5kZXYk';
+const CLERK_PUBLISHABLE_KEY = 'pk_test_bmljZS1mb3dsLTI5LmNsZXJrLmFjY291bnRzLmRldiQ';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
