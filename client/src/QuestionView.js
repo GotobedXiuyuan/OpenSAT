@@ -26,8 +26,8 @@ const QuestionView = ({ userId }) => {
   const handleRecommendationClick = (recommendedQuestion, index) => {
     setCurrentRecommendedQuestionInd(index - 1);
     setRecommendedQuestions((prev) => {
-      return prev.filter((rec, i) => i !== index);
-    })
+      return prev.filter((_, i) => i !== index);
+    });
     setQuestionData(recommendedQuestion.question);
     setSelectedChoice(null);
     setIsAnswered(false);
@@ -72,8 +72,10 @@ const QuestionView = ({ userId }) => {
           setQuestionData(randomQuestion[0]);
         }
       } else {
-        setCurrentRecommendedQuestionInd(currentRecommendedQuestionInd + 1);
         setQuestionData(recommendedQuestions[currentRecommendedQuestionInd + 1].question);
+        setRecommendedQuestions((prev) => {return prev.filter((rec, i) => i !== currentRecommendedQuestionInd)});
+        console.log(recommendedQuestions)
+        console.log(questionData)
       }
     } catch (error) {
       console.error('Error fetching next question:', error);
